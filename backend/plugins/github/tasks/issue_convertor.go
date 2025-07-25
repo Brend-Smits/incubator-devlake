@@ -102,7 +102,6 @@ func ConvertIssues(taskCtx plugin.SubTaskContext) errors.Error {
 				ResolutionDate:  issue.ClosedAt,
 				Severity:        issue.Severity,
 				Component:       issue.Component,
-				FixVersions:     "", // GitHub issues don't have fix versions
 			}
 			if issue.AssigneeId != 0 {
 				domainIssue.AssigneeId = accountIdGen.Generate(data.Options.ConnectionId, issue.AssigneeId)
