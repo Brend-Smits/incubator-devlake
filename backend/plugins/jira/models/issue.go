@@ -67,7 +67,6 @@ type JiraIssue struct {
 	ChangelogTotal           int
 	WorklogTotal             int
 	DueDate                  *time.Time
-	FixVersions              string `gorm:"type:text;column:fix_versions"`
 	common.NoPKModel
 }
 
