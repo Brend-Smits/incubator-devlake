@@ -62,11 +62,7 @@ type Issue struct {
 				Three2X32 string `json:"32x32"`
 			} `json:"avatarUrls"`
 		} `json:"project"`
-		FixVersions []struct {
-			Self string `json:"self"`
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		} `json:"fixVersions"`
+		FixVersions        []interface{}       `json:"fixVersions"`
 		Aggregatetimespent interface{}         `json:"aggregatetimespent"`
 		Resolution         interface{}         `json:"resolution"`
 		Resolutiondate     *common.Iso8601Time `json:"resolutiondate"`

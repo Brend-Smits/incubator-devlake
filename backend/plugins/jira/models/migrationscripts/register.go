@@ -54,6 +54,5 @@ func All() []plugin.MigrationScript {
 		new(changeIssueComponentType),
 		new(flushJiraIssues),
 		new(updateScopeConfig),
-		new(addFixVersions20250619),
 	}
 }
