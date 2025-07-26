@@ -20,6 +20,7 @@ package tasks
 import (
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/models/domainlayer/devops"
@@ -63,6 +64,16 @@ func ExtractJobs(taskCtx plugin.SubTaskContext) errors.Error {
 			}
 
 			results := make([]interface{}, 0, 1)
+			
+			// Handle zero time values to avoid MySQL datetime errors
+			var startedAt, completedAt *time.Time
+			if githubJob.StartedAt != nil && !githubJob.StartedAt.IsZero() && githubJob.StartedAt.Year() > 0 {
+				startedAt = githubJob.StartedAt
+			}
+			if githubJob.CompletedAt != nil && !githubJob.CompletedAt.IsZero() && githubJob.CompletedAt.Year() > 0 {
+				completedAt = githubJob.CompletedAt
+			}
+			
 			githubJobResult := &models.GithubJob{
 				ConnectionId:  data.Options.ConnectionId,
 				RepoId:        repoId,
@@ -75,8 +86,8 @@ func ExtractJobs(taskCtx plugin.SubTaskContext) errors.Error {
 				HTMLURL:       githubJob.HTMLURL,
 				Status:        strings.ToUpper(githubJob.Status),
 				Conclusion:    strings.ToUpper(githubJob.Conclusion),
-				StartedAt:     githubJob.StartedAt,
-				CompletedAt:   githubJob.CompletedAt,
+				StartedAt:     startedAt,
+				CompletedAt:   completedAt,
 				Name:          githubJob.Name,
 				Steps:         githubJob.Steps,
 				CheckRunURL:   githubJob.CheckRunURL,
