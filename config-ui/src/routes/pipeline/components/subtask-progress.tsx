@@ -17,10 +17,10 @@
  */
 
 import { useState } from 'react';
-import { 
-  ClockCircleOutlined, 
-  CheckCircleOutlined, 
-  CloseCircleOutlined, 
+import {
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
   LoadingOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
@@ -41,14 +41,14 @@ interface Props {
 
 const formatDuration = (startTime: string, endTime?: string): string => {
   if (!startTime) return '-';
-  
+
   const start = new Date(startTime);
   const end = endTime ? new Date(endTime) : new Date();
   const duration = Math.floor((end.getTime() - start.getTime()) / 1000);
-  
+
   if (duration < 60) return `${duration}s`;
   if (duration < 3600) return `${Math.floor(duration / 60)}m ${duration % 60}s`;
-  
+
   const hours = Math.floor(duration / 3600);
   const minutes = Math.floor((duration % 3600) / 60);
   const seconds = duration % 60;
@@ -56,32 +56,32 @@ const formatDuration = (startTime: string, endTime?: string): string => {
 };
 
 const getSubtaskStatusIcon = (subtask: any) => {
-  const hasRunningSubtasks = subtask.subtaskDetails?.some((detail: any) => 
+  const hasRunningSubtasks = subtask.subtaskDetails?.some((detail: any) =>
     detail.beganAt && !detail.finishedAt
   );
-  
+
   if (hasRunningSubtasks || subtask.status === 'TASK_RUNNING') {
     return <LoadingOutlined style={{ color: '#1890ff' }} />;
   }
-  
+
   const hasFailedSubtasks = subtask.subtaskDetails?.some((detail: any) => detail.isFailed);
   if (hasFailedSubtasks || subtask.status === 'TASK_FAILED') {
     return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
   }
-  
+
   if (subtask.status === 'TASK_COMPLETED') {
     return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
   }
-  
+
   return <ClockCircleOutlined style={{ color: '#d9d9d9' }} />;
 };
 
 const getSubtaskProgress = (subtask: any): number => {
   if (!subtask.subtaskDetails?.length) return 0;
-  
+
   const total = subtask.subtaskDetails.length;
   const completed = subtask.subtaskDetails.filter((detail: any) => detail.finishedAt).length;
-  
+
   return Math.round((completed / total) * 100);
 };
 
@@ -109,8 +109,8 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
       <div style={{ paddingLeft: 26, margin: 0, fontSize: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>Loading subtask details...</span>
-          <Button 
-            type="text" 
+          <Button
+            type="text"
             size="small"
             style={{ fontSize: 11, padding: '0 4px', height: 20 }}
             icon={<InfoCircleOutlined />}
@@ -125,14 +125,14 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
 
   // Find the specific task
   const currentTask = subtasksData.subtasks.find(task => task.id === taskId);
-  
+
   if (!currentTask) {
     return (
       <div style={{ paddingLeft: 26, margin: 0, fontSize: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>Subtask details not available</span>
-          <Button 
-            type="text" 
+          <Button
+            type="text"
             size="small"
             style={{ fontSize: 11, padding: '0 4px', height: 20 }}
             icon={<InfoCircleOutlined />}
@@ -146,7 +146,7 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
   }
 
   const currentRunningSubtask = subtasksData.subtasks
-    .flatMap(task => 
+    .flatMap(task =>
       task.subtaskDetails?.map(detail => ({
         ...detail,
         taskPlugin: task.plugin,
@@ -156,12 +156,12 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
     .find(detail => detail.beganAt && !detail.finishedAt);
 
   const totalSubtasks = subtasksData.subtasks.reduce(
-    (sum, task) => sum + (task.subtaskDetails?.length || 0), 
+    (sum, task) => sum + (task.subtaskDetails?.length || 0),
     0
   );
-  
+
   const completedSubtasks = subtasksData.subtasks.reduce(
-    (sum, task) => sum + (task.subtaskDetails?.filter(detail => detail.finishedAt).length || 0), 
+    (sum, task) => sum + (task.subtaskDetails?.filter(detail => detail.finishedAt).length || 0),
     0
   );
 
@@ -246,71 +246,87 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
             ) : taskStatus === IPipelineStatus.COMPLETED ? (
               <>All subtasks completed: <strong>{taskTotalSubtasks}/{taskTotalSubtasks}</strong></>
             ) : taskStatus === IPipelineStatus.FAILED ? (
-              <Tooltip 
+              <Tooltip
                 placement="topLeft"
+                    overlayStyle={{
+                      maxWidth: 800, // Double the width from 400px
+                      fontSize: 13,
+                    }}
+                    overlayInnerStyle={{
+                      backgroundColor: '#fff',
+                      color: '#333',
+                      border: '1px solid #d9d9d9',
+                      borderRadius: 6,
+                      boxShadow: '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+                    }}
                 title={
-                  <div style={{ maxWidth: 400 }}>
-                    <div><strong>Task Failed</strong></div>
+                  <div style={{ maxWidth: 800 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#dc2626', marginBottom: 8 }}>❌ Task Failed</div>
                     {currentTask.failedSubTask && (
-                      <div style={{ marginTop: 4 }}>
-                        <strong>Failed Subtask:</strong> {currentTask.failedSubTask}
+                      <div style={{ marginTop: 8 }}>
+                        <strong style={{ color: '#374151' }}>Failed Subtask:</strong> {currentTask.failedSubTask}
                       </div>
                     )}
                     {currentTask.errorName && (
-                      <div style={{ marginTop: 4 }}>
-                        <strong>Error Type:</strong> {currentTask.errorName}
+                      <div style={{ marginTop: 8 }}>
+                        <strong style={{ color: '#374151' }}>Error Type:</strong> {currentTask.errorName}
                       </div>
                     )}
                     {(message || currentTask.message) && (
-                      <div style={{ marginTop: 4 }}>
-                        <strong>Error Details:</strong>
-                        <div style={{ 
-                          marginTop: 2, 
-                          padding: 8, 
-                          backgroundColor: '#f5f5f5', 
-                          borderRadius: 4,
-                          fontFamily: 'monospace',
-                          fontSize: 11,
+                      <div style={{ marginTop: 8 }}>
+                        <strong style={{ color: '#374151' }}>Error Details:</strong>
+                        <div style={{
+                          marginTop: 2,
+                          padding: 12,
+                          backgroundColor: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: 6,
+                          fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                          fontSize: 12,
+                          lineHeight: 1.5,
+                          color: '#495057',
                           maxHeight: 200,
                           overflowY: 'auto',
                           whiteSpace: 'pre-wrap'
                         }}>
                           {(() => {
                             const errorMsg = message || currentTask.message || 'No error details available';
-                            
+
                             // Check for retry-related errors and provide better context
                             if (errorMsg.includes('Retry exceeded') && errorMsg.includes('times calling')) {
                               return `🔄 API Retry Failure:\n\nThis error occurred when the GitHub API repeatedly returned 500 errors despite multiple retry attempts. This is typically due to:\n\n• GitHub API temporary outages\n• Rate limiting issues\n• Specific repository/workflow accessibility\n\nOriginal Error:\n${errorMsg}`;
                             }
-                            
+
                             // Check for 500 errors specifically
                             if (errorMsg.includes('500') || errorMsg.includes('Server Error')) {
                               return `🚨 GitHub Server Error:\n\nGitHub API returned a 500 server error. This is usually temporary:\n\n• Check GitHub Status Page\n• API may be under maintenance\n• Repository might have access restrictions\n\nDetails:\n${errorMsg}`;
                             }
-                            
+
                             return errorMsg;
                           })()}
                         </div>
                       </div>
                     )}
                     {taskSpecificSubtasks.filter(s => s.isFailed).length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <strong>Failed Subtasks:</strong>
+                      <div style={{ marginTop: 12 }}>
+                        <strong style={{ color: '#374151' }}>Failed Subtasks:</strong>
                         {taskSpecificSubtasks.filter(s => s.isFailed).map(subtask => (
-                          <div key={subtask.id} style={{ 
-                            marginTop: 4, 
-                            padding: 6, 
-                            backgroundColor: '#fff2f0', 
-                            borderLeft: '3px solid #ff4d4f',
-                            borderRadius: 4
+                          <div key={subtask.id} style={{
+                            marginTop: 6,
+                            padding: 8,
+                            backgroundColor: '#fff5f5',
+                            border: '1px solid #fecaca',
+                            borderLeft: '4px solid #ef4444',
+                            borderRadius: 6
                           }}>
-                            <div><strong>{subtask.name}</strong></div>
+                            <div style={{ fontWeight: 600, color: '#dc2626' }}>{subtask.name}</div>
                             {subtask.message && (
-                              <div style={{ 
-                                marginTop: 2, 
-                                fontFamily: 'monospace', 
-                                fontSize: 10,
-                                color: '#666'
+                              <div style={{
+                                marginTop: 4,
+                                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                                fontSize: 11,
+                                color: '#6b7280',
+                                lineHeight: 1.4
                               }}>
                                 {subtask.message}
                               </div>
@@ -319,8 +335,8 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
                         ))}
                       </div>
                     )}
-                    <div style={{ marginTop: 8, fontSize: 11, color: '#666' }}>
-                      Click "Details" for complete logs and debugging information
+                    <div style={{ marginTop: 12, fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>
+                      💡 Click "Details" for complete logs and debugging information
                     </div>
                   </div>
                 }
@@ -330,70 +346,86 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
                 </span>
               </Tooltip>
             ) : taskStatus === IPipelineStatus.PARTIAL ? (
-              <Tooltip 
+              <Tooltip
                 placement="topLeft"
+                      overlayStyle={{
+                        maxWidth: 800, // Double the width from 400px
+                        fontSize: 13,
+                      }}
+                      overlayInnerStyle={{
+                        backgroundColor: '#fff',
+                        color: '#333',
+                        border: '1px solid #d9d9d9',
+                        borderRadius: 6,
+                        boxShadow: '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+                      }}
                 title={
-                  <div style={{ maxWidth: 400 }}>
-                    <div><strong>Task Partially Completed</strong></div>
-                    <div style={{ marginTop: 4 }}>
+                  <div style={{ maxWidth: 800 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#d97706', marginBottom: 8 }}>⚠️ Task Partially Completed</div>
+                    <div style={{ marginTop: 8, color: '#374151' }}>
                       Some subtasks completed successfully, others failed or were skipped.
                     </div>
                     {currentTask.failedSubTask && (
-                      <div style={{ marginTop: 4 }}>
-                        <strong>Failed Subtask:</strong> {currentTask.failedSubTask}
+                      <div style={{ marginTop: 8 }}>
+                        <strong style={{ color: '#374151' }}>Failed Subtask:</strong> {currentTask.failedSubTask}
                       </div>
                     )}
                     {(message || currentTask.message) && (
-                      <div style={{ marginTop: 4 }}>
-                        <strong>Last Error:</strong>
-                        <div style={{ 
-                          marginTop: 2, 
-                          padding: 8, 
-                          backgroundColor: '#f5f5f5', 
-                          borderRadius: 4,
-                          fontFamily: 'monospace',
-                          fontSize: 11,
+                      <div style={{ marginTop: 8 }}>
+                        <strong style={{ color: '#374151' }}>Last Error:</strong>
+                        <div style={{
+                          marginTop: 2,
+                          padding: 12,
+                          backgroundColor: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: 6,
+                          fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                          fontSize: 12,
+                          lineHeight: 1.5,
+                          color: '#495057',
                           maxHeight: 150,
                           overflowY: 'auto',
                           whiteSpace: 'pre-wrap'
                         }}>
                           {(() => {
                             const errorMsg = message || currentTask.message;
-                            
+
                             if (!errorMsg) return 'No error details available';
-                            
+
                             // Check for retry-related errors and provide context
                             if (errorMsg.includes('Retry exceeded') && errorMsg.includes('times calling')) {
                               return `🔄 API Retry Issues: Some GitHub API calls failed after retries. Data collection continued for other items.\n\n${errorMsg}`;
                             }
-                            
+
                             if (errorMsg.includes('500') || errorMsg.includes('Server Error')) {
                               return `⚠️ Partial Success: GitHub server errors caused some data collection failures, but other data was collected successfully.\n\n${errorMsg}`;
                             }
-                            
+
                             return errorMsg;
                           })()}
                         </div>
                       </div>
                     )}
                     {taskSpecificSubtasks.filter(s => s.isFailed).length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <strong>Failed Subtasks ({taskSpecificSubtasks.filter(s => s.isFailed).length}):</strong>
+                      <div style={{ marginTop: 12 }}>
+                        <strong style={{ color: '#374151' }}>Failed Subtasks ({taskSpecificSubtasks.filter(s => s.isFailed).length}):</strong>
                         {taskSpecificSubtasks.filter(s => s.isFailed).slice(0, 3).map(subtask => (
-                          <div key={subtask.id} style={{ 
-                            marginTop: 4, 
-                            padding: 6, 
-                            backgroundColor: '#fff2f0', 
-                            borderLeft: '3px solid #ff4d4f',
-                            borderRadius: 4
+                          <div key={subtask.id} style={{
+                            marginTop: 6,
+                            padding: 8,
+                            backgroundColor: '#fff5f5',
+                            border: '1px solid #fecaca',
+                            borderLeft: '4px solid #ef4444',
+                            borderRadius: 6
                           }}>
-                            <div><strong>{subtask.name}</strong></div>
+                            <div style={{ fontWeight: 600, color: '#dc2626' }}>{subtask.name}</div>
                             {subtask.message && (
-                              <div style={{ 
-                                marginTop: 2, 
-                                fontFamily: 'monospace', 
-                                fontSize: 10,
-                                color: '#666'
+                              <div style={{
+                                marginTop: 4,
+                                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                                fontSize: 11,
+                                color: '#6b7280',
+                                lineHeight: 1.4
                               }}>
                                 {subtask.message.length > 100 ? subtask.message.substring(0, 100) + '...' : subtask.message}
                               </div>
@@ -425,8 +457,8 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
               <>Subtasks: <strong>{taskCompletedSubtasks}/{taskTotalSubtasks}</strong></>
             )}
           </span>
-          <Button 
-            type="text" 
+          <Button
+            type="text"
             size="small"
             style={{ fontSize: 11, padding: '0 4px', height: 20 }}
             icon={<InfoCircleOutlined />}
@@ -448,8 +480,8 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
         }}
       >
         <div style={{ marginBottom: 16 }}>
-          <Tag color={taskStatus === IPipelineStatus.COMPLETED ? 'success' : 
-                     taskStatus === IPipelineStatus.FAILED ? 'error' : 
+          <Tag color={taskStatus === IPipelineStatus.COMPLETED ? 'success' :
+                     taskStatus === IPipelineStatus.FAILED ? 'error' :
                      [IPipelineStatus.ACTIVE, IPipelineStatus.RUNNING].includes(taskStatus) ? 'processing' : 'default'}>
             {taskStatus}
           </Tag>
@@ -463,7 +495,7 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
             </span>
           )}
         </div>
-        
+
         <Table
           columns={columns}
           dataSource={modalData}
