@@ -194,3 +194,104 @@ export const Task = styled.div`
     text-align: right;
   }
 `;
+
+export const SubtaskProgressContainer = styled.div`
+  margin-top: 8px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: #fafafa;
+
+  .subtask-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #e8e8e8;
+
+    .progress-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .current-subtask {
+        font-size: 12px;
+        color: #1890ff;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+    }
+  }
+
+  .subtask-details {
+    padding: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+
+    .task-group {
+      margin-bottom: 16px;
+
+      .task-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: white;
+        border-radius: 4px;
+        margin-bottom: 8px;
+
+        .task-name {
+          font-weight: 500;
+          flex: 1;
+        }
+      }
+
+      .subtask-list {
+        padding-left: 16px;
+
+        .subtask-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          margin-bottom: 2px;
+
+          &:hover {
+            background: #f0f0f0;
+          }
+
+          .subtask-status {
+            flex: 0 0 16px;
+          }
+
+          .subtask-info {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .subtask-name {
+              font-size: 13px;
+            }
+
+            .subtask-meta {
+              display: flex;
+              gap: 8px;
+              font-size: 11px;
+              color: #8c8c8c;
+
+              .duration {
+                color: #1890ff;
+              }
+
+              .records {
+                color: #52c41a;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;

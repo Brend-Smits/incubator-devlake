@@ -23,13 +23,14 @@ import { Button } from 'antd';
 import API from '@/api';
 import { Loading } from '@/components';
 import { useAutoRefresh } from '@/hooks';
-import { IPipeline, IPipelineStatus } from '@/types';
+import { IPipeline, IPipelineStatus, ITask } from '@/types';
 import { formatTime, operator } from '@/utils';
 
 import * as S from '../styled';
 
 import { PipelineStatus } from './status';
 import { PipelineDuration } from './duration';
+import { PipelineOverview } from './pipeline-overview';
 
 interface Props {
   id: ID;
@@ -51,6 +52,25 @@ export const PipelineInfo = ({ id }: Props) => {
       );
     },
   });
+
+  // Fetch tasks for the pipeline overview
+  const { data: tasksData } = useAutoRefresh<ITask[]>(
+    async () => {
+      const taskRes = await API.pipeline.tasks(id);
+      return taskRes.tasks;
+    },
+    [],
+    {
+      cancel: (data) => {
+        return !!(
+          data &&
+          data.every((task) =>
+            [IPipelineStatus.COMPLETED, IPipelineStatus.FAILED, IPipelineStatus.CANCELLED].includes(task.status),
+          )
+        );
+      },
+    },
+  );
 
   const handleCancel = async () => {
     const [success] = await operator(() => API.pipeline.remove(id), {
@@ -108,15 +128,20 @@ export const PipelineInfo = ({ id }: Props) => {
           </strong>
         </li>
         <li>
-          {[IPipelineStatus.ACTIVE, IPipelineStatus.RUNNING, IPipelineStatus.RERUN].includes(status) && (
-            <Button loading={operating} icon={<StopOutlined />} onClick={handleCancel} />
-          )}
-          {[
-            IPipelineStatus.COMPLETED,
-            IPipelineStatus.PARTIAL,
-            IPipelineStatus.FAILED,
-            IPipelineStatus.CANCELLED,
-          ].includes(status) && <Button loading={operating} icon={<RedoOutlined />} onClick={handleRerun} />}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+            {[IPipelineStatus.ACTIVE, IPipelineStatus.RUNNING, IPipelineStatus.RERUN].includes(status) && (
+              <Button loading={operating} icon={<StopOutlined />} onClick={handleCancel} />
+            )}
+            {[
+              IPipelineStatus.COMPLETED,
+              IPipelineStatus.PARTIAL,
+              IPipelineStatus.FAILED,
+              IPipelineStatus.CANCELLED,
+            ].includes(status) && <Button loading={operating} icon={<RedoOutlined />} onClick={handleRerun} />}
+            {tasksData && tasksData.length > 0 && (
+              <PipelineOverview pipelineId={id} tasks={tasksData} />
+            )}
+          </div>
         </li>
       </ul>
       {IPipelineStatus.FAILED === status && <p className="'message'">{message}</p>}

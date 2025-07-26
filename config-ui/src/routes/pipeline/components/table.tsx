@@ -31,6 +31,7 @@ import { formatTime } from '@/utils';
 import { PipelineStatus } from './status';
 import { PipelineDuration } from './duration';
 import { PipelineTasks } from './tasks';
+import { PipelineInfo } from './info';
 
 interface Props {
   loading: boolean;
@@ -129,7 +130,20 @@ export const PipelineTable = ({ loading, dataSource, pagination }: Props) => {
       />
       {JSON && <Inspector open title={`Pipeline ${JSON?.id}`} data={JSON} onClose={() => setJSON(null)} />}
       {id && (
-        <Modal open width={820} centered title={`Pipeline ${id}`} footer={null} onCancel={() => setId(null)}>
+        <Modal 
+          open 
+          width={1200} 
+          centered 
+          title={`Pipeline ${id} Details`} 
+          footer={null} 
+          onCancel={() => setId(null)}
+          styles={{
+            body: { padding: '20px 0' }
+          }}
+        >
+          <div style={{ marginBottom: 16 }}>
+            <PipelineInfo id={id} />
+          </div>
           <PipelineTasks id={id} />
         </Modal>
       )}

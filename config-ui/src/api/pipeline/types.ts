@@ -19,20 +19,40 @@
 export type SubTasksRes = {
   completionRate: number;
   status: string;
+  count: number;
   subtasks: Array<{
+    id: number;
+    pipelineId: number;
+    createdAt: string;
+    updatedAt: string;
+    beganAt?: string;
+    finishedAt?: string;
     plugin: string;
     options: {
-      fullName: string;
+      fullName?: string;
+      name?: string;
+      [key: string]: any;
     };
     status: string;
+    failedSubTask?: string;
+    message?: string;
+    errorName?: string;
+    spentSeconds: number;
     subtaskDetails: Array<{
+      id: number;
+      createdAt: string;
+      updatedAt: string;
+      taskId: number;
+      name: string;
+      number: number;
+      beganAt?: string;
+      finishedAt?: string;
+      spentSeconds: number;
+      finishedRecords: number;
+      sequence: number;
       isCollector: boolean;
       isFailed: boolean;
-      sequence: number;
-      name: string;
-      beganAt: string;
-      finishedAt: string;
-      finishedRecords: number;
+      message?: string;
     }>;
   }>;
 };

@@ -1,5 +1,7 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
+ * Licensed to the Apacheimport * as S from '../styled';
+
+import { PipelineDuration } from './duration';ftware Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
@@ -29,12 +31,14 @@ import { operator } from '@/utils';
 import * as S from '../styled';
 
 import { PipelineDuration } from './duration';
+import { SubtaskProgress } from '@/routes/pipeline/components/subtask-progress';
 
 interface Props {
   task: ITask;
+  pipelineId: ID;
 }
 
-export const PipelineTask = ({ task }: Props) => {
+export const PipelineTask = ({ task, pipelineId }: Props) => {
   const [operating, setOperating] = useState(false);
 
   const { id, beganAt, finishedAt, status, message, progressDetail } = task;
@@ -114,26 +118,8 @@ export const PipelineTask = ({ task }: Props) => {
             <TextTooltip content={name}>{name}</TextTooltip>
           </span>
         </div>
-        {[status === IPipelineStatus.CREATED, IPipelineStatus.PENDING].includes(status) && <p>Subtasks pending</p>}
-
-        {[IPipelineStatus.ACTIVE, IPipelineStatus.RUNNING].includes(status) && (
-          <p>
-            Subtasks running
-            <strong style={{ marginLeft: 8 }}>
-              {progressDetail?.finishedSubTasks}/{progressDetail?.totalSubTasks}
-            </strong>
-          </p>
-        )}
-
-        {status === IPipelineStatus.COMPLETED && <p>All Subtasks completed</p>}
-
-        {status === IPipelineStatus.FAILED && (
-          <TextTooltip content={message}>
-            <p className="error">Task failed: hover to view the reason</p>
-          </TextTooltip>
-        )}
-
-        {status === IPipelineStatus.CANCELLED && <p>Subtasks canceled</p>}
+        {/* Enhanced subtask progress for all task statuses */}
+        <SubtaskProgress pipelineId={pipelineId} taskStatus={status} message={message} taskId={id} />
       </div>
       <div className="duration">
         <PipelineDuration status={status} beganAt={beganAt} finishedAt={finishedAt} />

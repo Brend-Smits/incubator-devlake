@@ -104,7 +104,7 @@ export const PipelineTasks = ({ id, style }: Props) => {
           {Object.keys(stages).map((key) => (
             <li key={key}>
               {stages[key].map((task) => (
-                <PipelineTask key={task.id} task={task} />
+                <PipelineTask key={task.id} task={task} pipelineId={id} />
               ))}
             </li>
           ))}
