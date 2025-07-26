@@ -246,11 +246,148 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
             ) : taskStatus === IPipelineStatus.COMPLETED ? (
               <>All subtasks completed: <strong>{taskTotalSubtasks}/{taskTotalSubtasks}</strong></>
             ) : taskStatus === IPipelineStatus.FAILED ? (
-              <TextTooltip content={message || 'Task failed'}>
+              <Tooltip 
+                placement="topLeft"
+                title={
+                  <div style={{ maxWidth: 400 }}>
+                    <div><strong>Task Failed</strong></div>
+                    {currentTask.failedSubTask && (
+                      <div style={{ marginTop: 4 }}>
+                        <strong>Failed Subtask:</strong> {currentTask.failedSubTask}
+                      </div>
+                    )}
+                    {currentTask.errorName && (
+                      <div style={{ marginTop: 4 }}>
+                        <strong>Error Type:</strong> {currentTask.errorName}
+                      </div>
+                    )}
+                    {(message || currentTask.message) && (
+                      <div style={{ marginTop: 4 }}>
+                        <strong>Error Details:</strong>
+                        <div style={{ 
+                          marginTop: 2, 
+                          padding: 8, 
+                          backgroundColor: '#f5f5f5', 
+                          borderRadius: 4,
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          maxHeight: 200,
+                          overflowY: 'auto',
+                          whiteSpace: 'pre-wrap'
+                        }}>
+                          {message || currentTask.message || 'No error details available'}
+                        </div>
+                      </div>
+                    )}
+                    {taskSpecificSubtasks.filter(s => s.isFailed).length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <strong>Failed Subtasks:</strong>
+                        {taskSpecificSubtasks.filter(s => s.isFailed).map(subtask => (
+                          <div key={subtask.id} style={{ 
+                            marginTop: 4, 
+                            padding: 6, 
+                            backgroundColor: '#fff2f0', 
+                            borderLeft: '3px solid #ff4d4f',
+                            borderRadius: 4
+                          }}>
+                            <div><strong>{subtask.name}</strong></div>
+                            {subtask.message && (
+                              <div style={{ 
+                                marginTop: 2, 
+                                fontFamily: 'monospace', 
+                                fontSize: 10,
+                                color: '#666'
+                              }}>
+                                {subtask.message}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ marginTop: 8, fontSize: 11, color: '#666' }}>
+                      Click "Details" for complete logs and debugging information
+                    </div>
+                  </div>
+                }
+              >
                 <span className="error" style={{ color: '#f5222d' }}>
-                  Task failed: <strong>{taskCompletedSubtasks}/{taskTotalSubtasks}</strong> - hover to view reason
+                  Task failed: <strong>{taskCompletedSubtasks}/{taskTotalSubtasks}</strong> - hover for details
                 </span>
-              </TextTooltip>
+              </Tooltip>
+            ) : taskStatus === IPipelineStatus.PARTIAL ? (
+              <Tooltip 
+                placement="topLeft"
+                title={
+                  <div style={{ maxWidth: 400 }}>
+                    <div><strong>Task Partially Completed</strong></div>
+                    <div style={{ marginTop: 4 }}>
+                      Some subtasks completed successfully, others failed or were skipped.
+                    </div>
+                    {currentTask.failedSubTask && (
+                      <div style={{ marginTop: 4 }}>
+                        <strong>Failed Subtask:</strong> {currentTask.failedSubTask}
+                      </div>
+                    )}
+                    {(message || currentTask.message) && (
+                      <div style={{ marginTop: 4 }}>
+                        <strong>Last Error:</strong>
+                        <div style={{ 
+                          marginTop: 2, 
+                          padding: 8, 
+                          backgroundColor: '#f5f5f5', 
+                          borderRadius: 4,
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          maxHeight: 150,
+                          overflowY: 'auto',
+                          whiteSpace: 'pre-wrap'
+                        }}>
+                          {message || currentTask.message}
+                        </div>
+                      </div>
+                    )}
+                    {taskSpecificSubtasks.filter(s => s.isFailed).length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <strong>Failed Subtasks ({taskSpecificSubtasks.filter(s => s.isFailed).length}):</strong>
+                        {taskSpecificSubtasks.filter(s => s.isFailed).slice(0, 3).map(subtask => (
+                          <div key={subtask.id} style={{ 
+                            marginTop: 4, 
+                            padding: 6, 
+                            backgroundColor: '#fff2f0', 
+                            borderLeft: '3px solid #ff4d4f',
+                            borderRadius: 4
+                          }}>
+                            <div><strong>{subtask.name}</strong></div>
+                            {subtask.message && (
+                              <div style={{ 
+                                marginTop: 2, 
+                                fontFamily: 'monospace', 
+                                fontSize: 10,
+                                color: '#666'
+                              }}>
+                                {subtask.message.length > 100 ? subtask.message.substring(0, 100) + '...' : subtask.message}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {taskSpecificSubtasks.filter(s => s.isFailed).length > 3 && (
+                          <div style={{ marginTop: 4, fontSize: 11, color: '#666' }}>
+                            ... and {taskSpecificSubtasks.filter(s => s.isFailed).length - 3} more failed subtasks
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ marginTop: 8, fontSize: 11, color: '#666' }}>
+                      Click "Details" for complete logs and debugging information
+                    </div>
+                  </div>
+                }
+              >
+                <span className="partial" style={{ color: '#fa8c16' }}>
+                  Task partial: <strong>{taskCompletedSubtasks}/{taskTotalSubtasks}</strong> - hover for details
+                </span>
+              </Tooltip>
             ) : taskStatus === IPipelineStatus.CANCELLED ? (
               <>Subtasks canceled: <strong>{taskCompletedSubtasks}/{taskTotalSubtasks}</strong></>
             ) : [taskStatus === IPipelineStatus.CREATED, IPipelineStatus.PENDING].includes(taskStatus) ? (

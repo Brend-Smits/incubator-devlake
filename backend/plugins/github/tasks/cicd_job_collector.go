@@ -20,6 +20,7 @@ package tasks
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -50,6 +51,7 @@ var CollectJobsMeta = plugin.SubTaskMeta{
 func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 	db := taskCtx.GetDal()
 	data := taskCtx.GetData().(*GithubTaskData)
+	logger := taskCtx.GetLogger()
 
 	// state manager
 	apiCollector, err := api.NewStatefulApiCollector(api.RawDataSubTaskArgs{
@@ -84,7 +86,14 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 	if err != nil {
 		return err
 	}
-	// collect jobs
+
+	// Track failed runs for logging with error details
+	failedRuns := []int64{}
+	failedRunsErrors := make(map[int64]string) // Track error details per run
+	totalRuns := 0
+	currentRunId := int64(0)
+
+	// collect jobs with individual error handling
 	err = apiCollector.InitCollector(api.ApiCollectorArgs{
 		RawDataSubTaskArgs: api.RawDataSubTaskArgs{
 			Ctx: taskCtx,
@@ -102,6 +111,12 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 			query := url.Values{}
 			query.Set("page", fmt.Sprintf("%v", reqData.Pager.Page))
 			query.Set("per_page", fmt.Sprintf("%v", reqData.Pager.Size))
+
+			// Track current run ID from the input
+			if input, ok := reqData.Input.(*SimpleGithubRun); ok {
+				currentRunId = input.ID
+			}
+
 			return query, nil
 		},
 		GetTotalPages: GetTotalPagesFromResponse,
@@ -113,12 +128,66 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 			}
 			return body.GithubWorkflowJobs, nil
 		},
-		AfterResponse: ignoreHTTPStatus404,
+		AfterResponse: func(res *http.Response) errors.Error {
+			// Count total runs processed
+			totalRuns++
+
+			// Handle 404 errors gracefully (run might have been deleted)
+			if res.StatusCode == http.StatusNotFound {
+				failedRuns = append(failedRuns, currentRunId)
+				failedRunsErrors[currentRunId] = "404 Not Found - Run likely deleted"
+				logger.Warn(nil, "GitHub run %d not found (404) at %s, likely deleted. Skipping...", 
+					currentRunId, res.Request.URL.Path)
+				return nil
+			}
+
+			// Handle 500 errors gracefully (temporary GitHub API issues)
+			if res.StatusCode >= 500 {
+				// Read response body to get error details
+				errorBody := "unknown error"
+				if res.Body != nil {
+					if bodyBytes, err := io.ReadAll(res.Body); err == nil {
+						errorBody = string(bodyBytes)
+						// Truncate if too long to avoid log spam
+						if len(errorBody) > 300 {
+							errorBody = errorBody[:300] + "... (truncated)"
+						}
+					}
+				}
+				
+				failedRuns = append(failedRuns, currentRunId)
+				failedRunsErrors[currentRunId] = fmt.Sprintf("%d Server Error: %s", res.StatusCode, errorBody)
+				logger.Warn(nil, "GitHub API returned %d for run %d: %s. Skipping this run to continue collection", 
+					res.StatusCode, currentRunId, errorBody)
+				return nil // Skip this run but continue with others
+			}
+
+			return nil
+		},
 	})
 	if err != nil {
 		return err
 	}
-	return apiCollector.Execute()
+
+	err = apiCollector.Execute()
+
+	// Log summary of collection results
+	if len(failedRuns) > 0 {
+		logger.Info("Job collection completed with %d failed runs out of %d total runs. Failed run IDs: %v",
+			len(failedRuns), totalRuns, failedRuns)
+		
+		// Log detailed error information for debugging
+		logger.Info("Error details for failed runs:")
+		for runId, errorMsg := range failedRunsErrors {
+			logger.Info("  Run %d: %s", runId, errorMsg)
+		}
+		
+		logger.Info("Continuing pipeline execution despite individual run failures to maximize data collection")
+	} else {
+		logger.Info("Job collection completed successfully for all %d runs", totalRuns)
+	}
+
+	return err
 }
 
 type SimpleGithubRun struct {
