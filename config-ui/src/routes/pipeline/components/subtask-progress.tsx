@@ -275,7 +275,21 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
                           overflowY: 'auto',
                           whiteSpace: 'pre-wrap'
                         }}>
-                          {message || currentTask.message || 'No error details available'}
+                          {(() => {
+                            const errorMsg = message || currentTask.message || 'No error details available';
+                            
+                            // Check for retry-related errors and provide better context
+                            if (errorMsg.includes('Retry exceeded') && errorMsg.includes('times calling')) {
+                              return `🔄 API Retry Failure:\n\nThis error occurred when the GitHub API repeatedly returned 500 errors despite multiple retry attempts. This is typically due to:\n\n• GitHub API temporary outages\n• Rate limiting issues\n• Specific repository/workflow accessibility\n\nOriginal Error:\n${errorMsg}`;
+                            }
+                            
+                            // Check for 500 errors specifically
+                            if (errorMsg.includes('500') || errorMsg.includes('Server Error')) {
+                              return `🚨 GitHub Server Error:\n\nGitHub API returned a 500 server error. This is usually temporary:\n\n• Check GitHub Status Page\n• API may be under maintenance\n• Repository might have access restrictions\n\nDetails:\n${errorMsg}`;
+                            }
+                            
+                            return errorMsg;
+                          })()}
                         </div>
                       </div>
                     )}
@@ -343,7 +357,22 @@ export const SubtaskProgress = ({ pipelineId, taskStatus, message, taskId }: Pro
                           overflowY: 'auto',
                           whiteSpace: 'pre-wrap'
                         }}>
-                          {message || currentTask.message}
+                          {(() => {
+                            const errorMsg = message || currentTask.message;
+                            
+                            if (!errorMsg) return 'No error details available';
+                            
+                            // Check for retry-related errors and provide context
+                            if (errorMsg.includes('Retry exceeded') && errorMsg.includes('times calling')) {
+                              return `🔄 API Retry Issues: Some GitHub API calls failed after retries. Data collection continued for other items.\n\n${errorMsg}`;
+                            }
+                            
+                            if (errorMsg.includes('500') || errorMsg.includes('Server Error')) {
+                              return `⚠️ Partial Success: GitHub server errors caused some data collection failures, but other data was collected successfully.\n\n${errorMsg}`;
+                            }
+                            
+                            return errorMsg;
+                          })()}
                         </div>
                       </div>
                     )}

@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
 
 	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
@@ -170,6 +171,39 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 	}
 
 	err = apiCollector.Execute()
+	
+	// Handle execution errors gracefully - especially retry failures
+	if err != nil {
+		// Check if this is a retry-related error that we want to handle gracefully
+		errorStr := err.Error()
+		if strings.Contains(errorStr, "Retry exceeded") && strings.Contains(errorStr, "times calling") {
+			// Try to extract run ID from the error message
+			// Error format: "Retry exceeded 3 times calling repos/.../actions/runs/12345/jobs"
+			runIdStr := ""
+			if strings.Contains(errorStr, "/actions/runs/") {
+				parts := strings.Split(errorStr, "/actions/runs/")
+				if len(parts) > 1 {
+					runParts := strings.Split(parts[1], "/")
+					if len(runParts) > 0 {
+						runIdStr = runParts[0]
+					}
+				}
+			}
+			
+			logger.Warn(nil, "API collection completed with retry failures for run %s: %s", runIdStr, errorStr)
+			logger.Info("Some individual API calls failed after retries, but collection continued to maximize data collection")
+			
+			// Add this to our failed runs tracking if we can parse the run ID
+			if runIdStr != "" {
+				failedRunsErrors[0] = fmt.Sprintf("Retry failure: %s", errorStr)
+			}
+			
+			// Don't return the error - treat as partial success
+		} else {
+			// For other types of errors, still fail the task
+			return err
+		}
+	}
 
 	// Log summary of collection results
 	if len(failedRuns) > 0 {
