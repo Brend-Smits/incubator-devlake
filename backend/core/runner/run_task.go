@@ -87,8 +87,17 @@ func RunTask(
 			} else {
 				lakeErr = errors.Convert(err)
 			}
+			
+			// Check if this is a partial failure (some subtasks failed with SkipOnFail=true)
+			isPartialFailure := dbPipeline.SkipOnFail && strings.Contains(err.Error(), "some subtasks failed:")
+			
+			taskStatus := models.TASK_FAILED
+			if isPartialFailure {
+				taskStatus = models.TASK_PARTIAL
+			}
+			
 			dbe := db.UpdateColumns(task, []dal.DalSet{
-				{ColumnName: "status", Value: models.TASK_FAILED},
+				{ColumnName: "status", Value: taskStatus},
 				{ColumnName: "message", Value: lakeErr.Error()},
 				{ColumnName: "error_name", Value: lakeErr.Messages().Format()},
 				{ColumnName: "finished_at", Value: finishedAt},
@@ -116,7 +125,9 @@ func RunTask(
 			dal.Where("id=?", task.PipelineId),
 		))
 		// not return err if the `SkipOnFail` is true and the error is not canceled
-		if dbPipeline.SkipOnFail && !errors.Is(err, gocontext.Canceled) {
+		// or if this is a partial failure (which should be treated as success at pipeline level)
+		if (dbPipeline.SkipOnFail && !errors.Is(err, gocontext.Canceled)) || 
+		   (err != nil && strings.Contains(err.Error(), "some subtasks failed:")) {
 			err = nil
 		}
 	}()
@@ -293,6 +304,8 @@ func RunPluginSubTasks(
 	// execute subtasks in order
 	taskCtx.SetProgress(0, steps)
 	subtaskNumber := 0
+	var subtaskErrors []string // Track failed subtasks for partial success scenarios
+	
 	for _, subtaskMeta := range subtaskMetas {
 		subtaskCtx, err := taskCtx.SubTaskContext(subtaskMeta.Name)
 		if err != nil {
@@ -339,10 +352,25 @@ func RunPluginSubTasks(
 				}, where); err != nil {
 					basicRes.GetLogger().Error(err, "error writing subtask %v status to DB", subtaskCtx.GetName())
 				}
-				return err
+				// Track this failed subtask
+				subtaskErrors = append(subtaskErrors, subtaskMeta.Name)
+				
+				// Check if this subtask should cause the entire task to fail
+				if !subtaskMeta.SkipOnFail {
+					return err
+				}
+				// Log that we're continuing despite the failure
+				logger.Warn(err, "subtask %s failed but continuing due to SkipOnFail=true", subtaskMeta.Name)
 			}
 		}
 		taskCtx.IncProgress(1)
+	}
+
+	// If we have failed subtasks but reached here, it means some succeeded and some failed with SkipOnFail=true
+	// This should result in a TASK_PARTIAL status, but we let the caller handle the final status
+	if len(subtaskErrors) > 0 {
+		// Return an error that indicates partial failure, but let the pipeline-level SkipOnFail handle it
+		return errors.Default.New(fmt.Sprintf("some subtasks failed: %v", subtaskErrors))
 	}
 
 	return nil

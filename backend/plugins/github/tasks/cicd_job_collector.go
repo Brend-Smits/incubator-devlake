@@ -47,6 +47,7 @@ var CollectJobsMeta = plugin.SubTaskMeta{
 	DomainTypes:      []string{plugin.DOMAIN_TYPE_CICD},
 	DependencyTables: []string{models.GithubRun{}.TableName()},
 	ProductTables:    []string{RAW_JOB_TABLE},
+	SkipOnFail:       true, // Allow other subtasks to continue if job collection fails
 }
 
 func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {

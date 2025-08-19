@@ -38,6 +38,7 @@ type SubTaskMeta struct {
 	EnabledByDefault bool     `json:"enabled_by_default"`
 	Description      string   `json:"description"`
 	DomainTypes      []string `json:"domain_types"`
+	SkipOnFail       bool     `json:"skip_on_fail"`
 }
 
 func CreateSubTaskMeta(subTaskMeta []plugin.SubTaskMeta) []SubTaskMeta {
@@ -49,6 +50,7 @@ func CreateSubTaskMeta(subTaskMeta []plugin.SubTaskMeta) []SubTaskMeta {
 			EnabledByDefault: meta.EnabledByDefault,
 			Description:      meta.Description,
 			DomainTypes:      meta.DomainTypes,
+			SkipOnFail:       meta.SkipOnFail,
 		})
 	}
 	return ret

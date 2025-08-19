@@ -54,6 +54,7 @@ var CollectRunsMeta = plugin.SubTaskMeta{
 	DomainTypes:      []string{plugin.DOMAIN_TYPE_CICD},
 	DependencyTables: []string{},
 	ProductTables:    []string{RAW_RUN_TABLE},
+	SkipOnFail:       true, // Allow other subtasks to continue if workflow run collection fails
 }
 
 func CollectRuns(taskCtx plugin.SubTaskContext) errors.Error {
