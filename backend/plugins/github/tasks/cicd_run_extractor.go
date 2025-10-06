@@ -60,7 +60,7 @@ func ExtractRuns(taskCtx plugin.SubTaskContext) errors.Error {
 			if err != nil {
 				return nil, err
 			}
-			
+
 			// Handle zero time values to avoid MySQL datetime errors
 			if githubRun.GithubCreatedAt != nil && (githubRun.GithubCreatedAt.IsZero() || githubRun.GithubCreatedAt.Year() == 0) {
 				githubRun.GithubCreatedAt = nil
@@ -71,7 +71,7 @@ func ExtractRuns(taskCtx plugin.SubTaskContext) errors.Error {
 			if githubRun.RunStartedAt != nil && (githubRun.RunStartedAt.IsZero() || githubRun.RunStartedAt.Year() == 0) {
 				githubRun.RunStartedAt = nil
 			}
-			
+
 			githubRun.RepoId = repoId
 			githubRun.ConnectionId = data.Options.ConnectionId
 			githubRun.Type = data.RegexEnricher.ReturnNameIfMatched(devops.DEPLOYMENT, githubRun.Name)

@@ -64,7 +64,7 @@ func ExtractJobs(taskCtx plugin.SubTaskContext) errors.Error {
 			}
 
 			results := make([]interface{}, 0, 1)
-			
+
 			// Handle zero time values to avoid MySQL datetime errors
 			var startedAt, completedAt *time.Time
 			if githubJob.StartedAt != nil && !githubJob.StartedAt.IsZero() && githubJob.StartedAt.Year() > 0 {
@@ -73,7 +73,7 @@ func ExtractJobs(taskCtx plugin.SubTaskContext) errors.Error {
 			if githubJob.CompletedAt != nil && !githubJob.CompletedAt.IsZero() && githubJob.CompletedAt.Year() > 0 {
 				completedAt = githubJob.CompletedAt
 			}
-			
+
 			githubJobResult := &models.GithubJob{
 				ConnectionId:  data.Options.ConnectionId,
 				RepoId:        repoId,

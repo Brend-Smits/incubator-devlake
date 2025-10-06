@@ -138,7 +138,7 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 			if res.StatusCode == http.StatusNotFound {
 				failedRuns = append(failedRuns, currentRunId)
 				failedRunsErrors[currentRunId] = "404 Not Found - Run likely deleted"
-				logger.Warn(nil, "GitHub run %d not found (404) at %s, likely deleted. Skipping...", 
+				logger.Warn(nil, "GitHub run %d not found (404) at %s, likely deleted. Skipping...",
 					currentRunId, res.Request.URL.Path)
 				return nil
 			}
@@ -156,10 +156,10 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 						}
 					}
 				}
-				
+
 				failedRuns = append(failedRuns, currentRunId)
 				failedRunsErrors[currentRunId] = fmt.Sprintf("%d Server Error: %s", res.StatusCode, errorBody)
-				logger.Warn(nil, "GitHub API returned %d for run %d: %s. Skipping this run to continue collection", 
+				logger.Warn(nil, "GitHub API returned %d for run %d: %s. Skipping this run to continue collection",
 					res.StatusCode, currentRunId, errorBody)
 				return nil // Skip this run but continue with others
 			}
@@ -172,7 +172,7 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 	}
 
 	err = apiCollector.Execute()
-	
+
 	// Handle execution errors gracefully - especially retry failures
 	if err != nil {
 		// Check if this is a retry-related error that we want to handle gracefully
@@ -190,15 +190,15 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 					}
 				}
 			}
-			
+
 			logger.Warn(nil, "API collection completed with retry failures for run %s: %s", runIdStr, errorStr)
 			logger.Info("Some individual API calls failed after retries, but collection continued to maximize data collection")
-			
+
 			// Add this to our failed runs tracking if we can parse the run ID
 			if runIdStr != "" {
 				failedRunsErrors[0] = fmt.Sprintf("Retry failure: %s", errorStr)
 			}
-			
+
 			// Don't return the error - treat as partial success
 		} else {
 			// For other types of errors, still fail the task
@@ -210,13 +210,13 @@ func CollectJobs(taskCtx plugin.SubTaskContext) errors.Error {
 	if len(failedRuns) > 0 {
 		logger.Info("Job collection completed with %d failed runs out of %d total runs. Failed run IDs: %v",
 			len(failedRuns), totalRuns, failedRuns)
-		
+
 		// Log detailed error information for debugging
 		logger.Info("Error details for failed runs:")
 		for runId, errorMsg := range failedRunsErrors {
 			logger.Info("  Run %d: %s", runId, errorMsg)
 		}
-		
+
 		logger.Info("Continuing pipeline execution despite individual run failures to maximize data collection")
 	} else {
 		logger.Info("Job collection completed successfully for all %d runs", totalRuns)

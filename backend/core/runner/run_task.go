@@ -87,15 +87,15 @@ func RunTask(
 			} else {
 				lakeErr = errors.Convert(err)
 			}
-			
+
 			// Check if this is a partial failure (some subtasks failed with SkipOnFail=true)
 			isPartialFailure := dbPipeline.SkipOnFail && strings.Contains(err.Error(), "some subtasks failed:")
-			
+
 			taskStatus := models.TASK_FAILED
 			if isPartialFailure {
 				taskStatus = models.TASK_PARTIAL
 			}
-			
+
 			dbe := db.UpdateColumns(task, []dal.DalSet{
 				{ColumnName: "status", Value: taskStatus},
 				{ColumnName: "message", Value: lakeErr.Error()},
@@ -126,8 +126,8 @@ func RunTask(
 		))
 		// not return err if the `SkipOnFail` is true and the error is not canceled
 		// or if this is a partial failure (which should be treated as success at pipeline level)
-		if (dbPipeline.SkipOnFail && !errors.Is(err, gocontext.Canceled)) || 
-		   (err != nil && strings.Contains(err.Error(), "some subtasks failed:")) {
+		if (dbPipeline.SkipOnFail && !errors.Is(err, gocontext.Canceled)) ||
+			(err != nil && strings.Contains(err.Error(), "some subtasks failed:")) {
 			err = nil
 		}
 	}()
@@ -305,7 +305,7 @@ func RunPluginSubTasks(
 	taskCtx.SetProgress(0, steps)
 	subtaskNumber := 0
 	var subtaskErrors []string // Track failed subtasks for partial success scenarios
-	
+
 	for _, subtaskMeta := range subtaskMetas {
 		subtaskCtx, err := taskCtx.SubTaskContext(subtaskMeta.Name)
 		if err != nil {
@@ -354,7 +354,7 @@ func RunPluginSubTasks(
 				}
 				// Track this failed subtask
 				subtaskErrors = append(subtaskErrors, subtaskMeta.Name)
-				
+
 				// Check if this subtask should cause the entire task to fail
 				if !subtaskMeta.SkipOnFail {
 					return err

@@ -28,10 +28,10 @@ import (
 
 func TestExtractJobs_ZeroTimeHandling(t *testing.T) {
 	// Test data with zero time values that would cause MySQL errors
-	year0Time := time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC)  // Year 0000 time from JSON parsing
-	year1Time := time.Time{}  // Go's zero time (year 0001)
+	year0Time := time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC) // Year 0000 time from JSON parsing
+	year1Time := time.Time{}                              // Go's zero time (year 0001)
 	validTime := time.Date(2023, 1, 15, 10, 30, 0, 0, time.UTC)
-	
+
 	testCases := []struct {
 		name        string
 		inputJob    *models.GithubJob
